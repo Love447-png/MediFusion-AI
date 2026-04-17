@@ -15,6 +15,7 @@ export interface MediFusionState {
   userInput: string;
   language: "en" | "hi";
   imageDescription?: string;
+  imageData?: string; // Base64
   symptoms: string[];
   context: string;
   riskLevel?: RiskLevel;
@@ -24,4 +25,5 @@ export interface MediFusionState {
   verifierNotes?: string;
   isSafe: boolean;
   confidenceScore: number;
+  finalOutput?: string;
 }
