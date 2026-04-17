@@ -1,5 +1,5 @@
 import { StateGraph, Annotation, END, START } from "@langchain/langgraph";
-import { ChatOllama } from "@langchain/ollama";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { AgentTrace, RiskLevel } from "./types";
 import { MASTER_SWARM_PROMPT } from "./agents/prompts";
 
@@ -20,10 +20,8 @@ const MediFusionAnnotation = Annotation.Root({
   finalOutput: Annotation<string | undefined>,
 });
 
-const model = new ChatOllama({
-  baseUrl: "http://localhost:11434", 
-  model: "llama3.2:3b",
-  format: "json", // Crucial for smaller 3B models to adhere to JSON structure
+const model = new ChatGoogleGenerativeAI({
+  modelName: "gemini-1.5-flash",
   temperature: 0.1,
 });
 
@@ -50,12 +48,16 @@ const swarmNode = async (state: typeof MediFusionAnnotation.State) => {
   let messageContent: any[];
 
   if (state.imageData) {
-    // Local llama3.2:3b is a text model. Gracefully acknowledge the image but bypass visual parsing.
+    // Using multimodal Gemini model. Pass the image to the model to process.
     messageContent = [
       {
         type: "text",
-        text: `${userContext}\n\n[USER ATTACHED AN IMAGE. Note: You are running locally as a text-only reasoning engine. You cannot visually verify the image. Remind the user to describe it if needed.]\n\n${MASTER_SWARM_PROMPT}`,
+        text: `${userContext}\n\n${MASTER_SWARM_PROMPT}`,
       },
+      {
+        type: "image_url",
+        image_url: state.imageData,
+      }
     ];
   } else {
     messageContent = [{ type: "text", text: `${userContext}\n\n${MASTER_SWARM_PROMPT}` }];
@@ -79,7 +81,7 @@ const swarmNode = async (state: typeof MediFusionAnnotation.State) => {
       reasoningTrace: [
         {
           agentName: "MediFusion Swarm",
-          thought: "Processing your health query on local hardware...",
+          thought: "Processing your health query via cloud...",
           output: content,
         },
       ],

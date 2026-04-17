@@ -3,7 +3,9 @@ import { graph } from "@/lib/graph";
 
 export async function POST(req: NextRequest) {
   try {
-    // Removed API_KEY check — running locally on Ollama
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json({ error: "Gemini API Key is not configured." }, { status: 500 });
+    }
 
     const { message, language, imageData } = await req.json();
 
@@ -30,14 +32,6 @@ export async function POST(req: NextRequest) {
 
     const msg: string = error?.message || "";
     
-    // Friendly error specifically tailored to a dead Ollama server
-    if (msg.includes("fetch") || msg.includes("ECONNREFUSED") || msg.includes("EADDRNOTAVAIL") || msg.includes("failed to fetch")) {
-      return NextResponse.json(
-        { error: "Local Ollama server is unreachable. Please make sure the Ollama app is running locally (http://localhost:11434)." },
-        { status: 503 }
-      );
-    }
-
-    return NextResponse.json({ error: msg || "An unexpected error occurred connecting to the local AI." }, { status: 500 });
+    return NextResponse.json({ error: msg || "An unexpected error occurred connecting to the Gemini AI." }, { status: 500 });
   }
 }
